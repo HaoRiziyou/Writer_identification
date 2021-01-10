@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+.all{
+max-width: 1000px;
+background-color: #e1e1e1;
+}
+.collapsible {
+  background-color: #777;
+  color: white;
+  cursor: pointer;
+  padding: 18px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 15px;
+}
+
+.active, .collapsible:hover {
+  background-color: #555;
+}
+
+.content {
+  padding: 0 18px;
+  display: none;
+  overflow: hidden;
+  background-color: #d1d1d1;
+  max-width: 982px;
+}
+
+th, td {
+  padding: 8px;
+  text-align: left;
+}
+
+tr:hover {background-color: #e5e5e5;}
+
+</style>
+</head>
+<body>
+<div class="all">
+<div align="center" class="head">
+<h3>ICDAR2019 COMPETITION ON IMAGE RETRIEVAL FOR HISTORICAL HANDWRITTEN DOCUMENTS
+<br>
+<a href="https://clamm.irht.cnrs.fr/icdar2019-hdrc-ir/">ICDAR-2019-HDRC-IR</a>
+</h3>
+</div>
+<div align="center">
+    <img src="./svg/participants.svg"/>
+
+    <table>
+    <tr><th> # </th> <th>Team Name</th> <th>Best mAP up to now</th> <th>Last submission mAP</th> </th>
+    
+    
+    <tr> <td>0</td> <td> Srslbp-l1out </td> <td>82.97%</td> <td>82.97 %</td> </tr> 
+    
+    <tr> <td>1</td> <td> Srslbp-17 </td> <td>73.93%</td> <td>73.93 %</td> </tr> 
+    
+    </table>
+</div>
+
+<button class="collapsible">Srslbp-l1out</button>
+<div class="content">
+    <h4>Description:</h4>
+    This is a baseline method base on Sparse Radial Sampling Local Binary Patterns SRS-LBP.
+For more details, refer, to Sparse Radial Sampling LBP for Writer Identification <a href="http://nicolaou.homouniversalis.org/assets/srs-lbp/srs_lbp_ICDAR2015_accepted_version.pdf">download</a>.
+In this variant, defferent PCA components were extracted from the retrieval database for every query and applied to both query and retrieval database.
+
+    <hr>
+    <h4>Submissions:</h4>
+    
+    <button class="collapsible">Wed Apr 17 10:03:07 2019   mAP: <b>82.97 %</b></button>
+    <div class="content" align="center">
+        <img src="./svg/team_SRSLBP-L1Out_da10acfdc87b5a246f5e1eceaa3088dc_roc.svg"/>
+        <br>
+        </table>
+        <tr> <td>mAP:</td> <td>82.97</td> </tr>
+        <tr> <td>Precision:</td> <td>44.28</td> </tr>
+        <tr> <td>Recall:</td> <td>88.56</td> </tr>
+        <tr> <td>F-score:</td> <td>59.04</td> </tr>
+        </table>
+    </div>
+    
+</div>
+
+<button class="collapsible">Srslbp-17</button>
+<div class="content">
+    <h4>Description:</h4>
+    This is a baseline method base on Sparse Radial Sampling Local Binary Patterns SRS-LBP.
+For more details, refer, to Sparse Radial Sampling LBP for Writer Identification <a href="http://nicolaou.homouniversalis.org/assets/srs-lbp/srs_lbp_ICDAR2015_accepted_version.pdf">download</a>.
+In this variant The PCA components were extracted from the colored test set of the ICDAR2017 Competition on Historical Document Writer Identification.
+
+    <hr>
+    <h4>Submissions:</h4>
+    
+    <button class="collapsible">Wed Apr 17 10:00:35 2019   mAP: <b>73.93 %</b></button>
+    <div class="content" align="center">
+        <img src="./svg/team_SRSLBP-17_2c94c20f55a5509f9b5b37dab6c009c1_roc.svg"/>
+        <br>
+        </table>
+        <tr> <td>mAP:</td> <td>73.93</td> </tr>
+        <tr> <td>Precision:</td> <td>40.45</td> </tr>
+        <tr> <td>Recall:</td> <td>80.9</td> </tr>
+        <tr> <td>F-score:</td> <td>53.93</td> </tr>
+        </table>
+    </div>
+    
+</div>
+
+
+<div class="footer">
+Report compiled in 1.85494 sec.
+<br>
+Report compiled on 04/17/2019, 12:01:49.
+<br>
+Utility writen by anguelos (dot) nicolaou (at) gmail (dot) com <a href="https://github.com/anguelos/wi19_evaluate">source code</a>
+</div>
+
+
+<script>
+var coll = document.getElementsByClassName("collapsible");
+var i;
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+</script>
+</div>
+</body>
+</html>
