@@ -1,1 +1,0 @@
-PYTHONPATH="/proj/ciptmp/ap04utym/spatio-temporal_handwriting_imitation-master/ext/" python3 ./srs_lbp.py -validation_csv=./srslbp.csv -output=/tmp/submission.csv

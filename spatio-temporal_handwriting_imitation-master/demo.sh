@@ -7,4 +7,4 @@ export PYTHONPATH=$PYTHONPATH:"$SCRIPTPATH"
 python3 "$SCRIPTPATH/tools/full_pipeline.py" \
        "$SCRIPTPATH/input.png" \
        --text-in "above or sinking below" \
-       --text-out "gei wo qu si"
+       --text-out "hahah nihao"
