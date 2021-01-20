@@ -12,3 +12,5 @@ Fork from https://github.com/M4rt1nM4yr/spatio-temporal_handwriting_imitation.gi
 ./bin/wi19evaluate -submission_csv=dm.csv -gt_csv=gt.csv 
 ./cvl_test/0001-1-cropped.tif ./cvl_test/0002-1-cropped.tif ./cvl_test/0001-2-cropped.tif ./cvl_test/0002-2-cropped.tif  >features.csv
 
+
+merge srslbp.py and bin evaluate to the tools
