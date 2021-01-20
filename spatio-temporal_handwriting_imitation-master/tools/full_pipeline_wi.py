@@ -4,7 +4,7 @@ import numpy as np
 import sys
 import sklearn.decomposition
 import scipy
-from wi_19 import wi19
+import wi19
 import time
 
 """SRS LBP.
