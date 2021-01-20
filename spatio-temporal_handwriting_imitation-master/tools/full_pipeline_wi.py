@@ -1,75 +1,129 @@
-#!/usr/bin/env python3
-
-import argparse
-import os
-
-
-from PIL import Image
+#!/usr/bin/env python
 
 import numpy as np
-import matplotlib.pyplot as plt
+import sys
+import sklearn.decomposition
+import scipy
+from wi_19 import wi19
+import time
 
-from ext import srslbp
+"""SRS LBP.
+This script implements the paper 'Sparse Radial Sampling LBP for Writer Identification'
 
-from pipeline.skeletonization import Skeletonizer
-from pipeline.sampling import sample_to_penpositions
-from pipeline.graves import GravesWriter
-from pipeline.align import align
-from pipeline.render_skeleton import render_skeleton
-from pipeline.pen_style_transfer import PenStyleTransfer
+https://arxiv.org/pdf/1504.06133.pdf
+@inproceedings{nicolaou2015sparse,
+  title={Sparse radial sampling LBP for writer identification},
+  author={Nicolaou, Anguelos and Bagdanov, Andrew D and Liwicki, Marcus and Karatzas, Dimosthenis},
+  booktitle={2015 13th International Conference on Document Analysis and Recognition (ICDAR)},
+  pages={716--720},
+  year={2015},
+  organization={IEEE}
+}
 
-from datastructures.PenPosition import plotPenPositions
+For more information contact Anguelos dot Nicolaou at gmail dot com.
+"""
+
+def read_csv(fname):
+    lines=[l.split(",") for l in open(fname).read().strip().split("\n")]
+    fnames=[line[0] for line in lines]
+    values=[[float(col) for col in line[1:]] for line in lines]
+    return np.array(values),np.array(fnames)
 
 
+def block_normalise(values,block_sizes=None,suppress_bins=[0]):
+    if block_sizes is None:
+        block_sizes = np.asarray([256]*int((values.shape[1]/256)))
+        #block_sizes = [256]*(values.shape[1]/256)
+    res_values = values.copy()
+    for block in range(len(block_sizes)):
+        block_start = sum(block_sizes[:block])
+        block_end = sum(block_sizes[:block+1])
+        for bin in suppress_bins:
+            res_values[:,256] =0
+            res_values[:,bin+block_start] = 0
+        block_sum=res_values[:,block_start:block_end].sum(axis=1)
+        res_values[:,block_start:block_end]/=block_sum[:,None]
+    return res_values
 
 
-def main():
+def hellinger_normalise(values):
+    return np.sign(values)*np.abs(values)**.5
 
-    parser = argparse.ArgumentParser(description='The first working version (without pen style transfer). Modifies the content of an image.')
-    parser.add_argument('--text-in', help='The input text', required=True)
-    parser.add_argument('--text-out', help='The output text', required=True)
-    parser.add_argument('input', help='The input file')
-    args = parser.parse_args()
-    print(args)
+def l2_normalise(values):
+    return values/((np.sum(values**2,1)**.5)+.00000000000001)[:,None]
 
-    inputImg = Image.open(args.input)
+def pca_reduce(values,pca_values=None,n_components=200,l1out=False):
+    n_components=1
+    pca = sklearn.decomposition.PCA(copy=False, n_components=n_components)
+    if l1out:
+        res = np.zeros_like(pca.fit(values).transform(values))
+        for k in range(res.shape[0]):
+            idx = np.arange(res.shape[0]) != k
+            res[k, :] = pca.fit(values[idx, :]).transform(values[~idx, :])
+            sys.stderr.write(".")
+            sys.stderr.flush()
+        sys.stderr.write("\n")
+        sys.stderr.flush()
+        return res
 
-    with Skeletonizer() as skeletonizer:
-        skeletonBlurImg = skeletonizer.skeletonize_blurred(inputImg)
-        skeletonImg = skeletonizer.skeletonize_sharp(skeletonBlurImg)
+    if pca_values is None or pca_values is values:
+        pca_values = values
+        print ("PCA ..." ),
+        return pca.fit_transform(values)
+        print ("done")
+        if pca_values.shape[0]>2000:
+            pass
+            #idx=np.arange(pca_values.shape[0])
+            #bp.random.shuffle(idx)
+            #pca_values=pca_values[idx[:pca_values.shape[1]],:]
 
-    penPositions = sample_to_penpositions(skeletonImg)
+    return pca.fit(pca_values).transform(values)
 
-    with GravesWriter() as writer:
-        newPenPositions = writer.write(args.text_out, args.text_in, penPositions)
+def print_values_dist(values,fnames,metric="cityblock"):
+    compressed_distmat=scipy.spatial.distance.pdist(values,metric=metric)
+    D = scipy.spatial.distance.squareform(compressed_distmat)
+    csv_rows=[]
+    for item in range(fnames.shape[0]):
+        columns = ["{}".format(c) for c in D[item,:].tolist()]
+        csv_rows.append(fnames[item]+","+",".join(columns))
+    return "\n".join(csv_rows)
 
-    newPenPositions = align(newPenPositions, penPositions)
+def print_values_dist(values,fnames,metric="cityblock",fd=None):
+    if fd is None:
+        fd=sys.stdout
+    compressed_distmat=scipy.spatial.distance.pdist(values,metric=metric)
+    D = scipy.spatial.distance.squareform(compressed_distmat)
+    csv_rows=[]
+    for item in range(fnames.shape[0]):
+        columns = ["{}".format(c) for c in D[item,:].tolist()]
+        fd.write(fnames[item]+","+",".join(columns)+"\n")
+    fd.flush()
 
-    newSkeletonBlurImg, newSkeletonImg = render_skeleton(newPenPositions, inputImg.size)
-
-    with PenStyleTransfer() as penStyleTransfer:
-        outputImg = penStyleTransfer.transferStyle(newSkeletonBlurImg, inputImg)
-
-    print("Done. Displaying results ...")
-
-    plt.figure('Full Pipeline', figsize=(16, 9))
-    plt.subplot(3, 2, 1)
-    plt.imshow(inputImg)
-    plt.subplot(3, 2, 3)
-    plt.imshow(skeletonBlurImg)
-    plt.subplot(3, 2, 5)
-    plt.imshow(skeletonImg, cmap='binary', vmax=10)
-    plotPenPositions(penPositions)
-    plt.subplot(3, 2, 6)
-    plt.imshow(newSkeletonImg, cmap='binary', vmax=256*10)
-    plotPenPositions(newPenPositions)
-    plt.subplot(3, 2, 4)
-    plt.imshow(newSkeletonBlurImg)
-    plt.subplot(3, 2, 2)
-    plt.imshow(outputImg)
-    plt.show()
-   
-
+def pipeline(validation_values,pcaset_values,n_components=200,l1out=False):
+    t=time.time()
+    #print "Pipeline1: {} msec".format(int(1000.*(time.time()-t)))
+    validation_values=block_normalise(validation_values)
+    #print "Pipeline2: {} msec".format(int(1000. * (time.time() - t)))
+    if pca_values is not None:
+        pcaset_values = block_normalise(pcaset_values)
+    #print "Pipeline3: {} msec".format(int(1000. * (time.time() - t)))
+    validation_values=pca_reduce(validation_values,pca_values=pcaset_values,n_components=n_components,l1out=l1out)
+    validation_values=hellinger_normalise(validation_values)
+    validation_values=l2_normalise(validation_values)
+    return validation_values
 
 if __name__ == "__main__":
-    main()
+    params = {"validation_csv": "", "pca_csv": "{validation_csv}","output":"stdout","nb_components":200,"metric":"cityblock","l1out":0}
+    params,_ = wi19.get_arg_switches(params)
+    validation_values,validation_fnames=read_csv(params["validation_csv"])
+    if params["validation_csv"]!=params["pca_csv"]:
+        pca_values,_=read_csv(params["pca_csv"])
+    else:
+        pca_values=None
+    validation_values=pipeline(validation_values,pca_values,l1out=params["l1out"])
+    #out_csv=print_values_dist(validation_values,validation_fnames,metric=params["metric"])
+    if params["output"]=="stdout":
+        fd=sys.stdout
+    else:
+        fd=open(params["output"],"w")
+    print_values_dist(validation_values, validation_fnames, metric=params["metric"],fd=fd)
