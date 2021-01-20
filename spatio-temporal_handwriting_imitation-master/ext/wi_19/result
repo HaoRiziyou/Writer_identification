@@ -1,0 +1,10 @@
+Before load_dm,allow_missing_samples= True
+Loading submission submission.csv with groundtruth gt.csv ...  ('1', './cvl_test/0001-1-cropped.tif')
+('1', './cvl_test/0001-2-cropped.tif')
+('2', './cvl_test/0002-1-cropped.tif')
+('2', './cvl_test/0002-2-cropped.tif')
+{'1': './cvl_test/0001-2-cropped.tif', '2': './cvl_test/0002-2-cropped.tif'}
+('Non singletons:', 1.0)
+Submission & partition & Precision & Recall & F-Score & mAP & Accuracy \\ 
+ submission & gt &  20.0 \% & 1e+02 \% &  33.3 \% & 1e+02 \% & 1e+02 \%
+
