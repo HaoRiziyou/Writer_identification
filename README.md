@@ -21,6 +21,14 @@ See requirements.txt
 ## Run the full pipeline
 
 Before running the pipeline the trained model checkpoints have to be copied into the folder _checkpoints_ from https://drive.google.com/open?id=11fc8b7QTSqL8oIjs7ddGutlRKEL8NBqh.
+
+```bash
+pip3 install --user gdown
+gdown https://drive.google.com/uc?id=11fc8b7QTSqL8oIjs7ddGutlRKEL8NBqh
+unzip checkpoints.zip
+#rm checkpoints.zip # if you need space
+```
+
 To run the pipeline see __demo.sh__. 
 
 
