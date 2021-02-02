@@ -11,3 +11,4 @@ tensorflow
 pandas
 gdown
 torchviz
+scikit-learn

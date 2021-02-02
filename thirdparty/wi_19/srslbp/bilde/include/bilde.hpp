@@ -7,7 +7,7 @@
 #include "util/argv.hpp" //we want verbose everywhere
 #include "util/timer.hpp" //timing operations
 
-#include "debug.hpp" //comment out if no opencv2 if defined
+//#include "debug.hpp" //comment out if no opencv2 if defined
 
 #include "pixel_metrics.hpp"
 #include "static_vector.hpp"
