@@ -32,6 +32,15 @@ unzip checkpoints.zip
 To run the pipeline see __demo.sh__. 
 
 
+## Download CVL
+```bash
+wget https://zenodo.org/record/1492267/files/cvl-database-cropped-1-1.zip?download=1
+mv 'cvl-database-cropped-1-1.zip?download=1' cvldb.zip
+mkdir -p data/cvl
+cd data/cvl
+unzip ../../cvldb.zip
+```
+
 ## Code contribution
 
 The code was mainly produced by https://github.com/Finomnis
@@ -40,4 +49,3 @@ The code was mainly produced by https://github.com/Finomnis
 
 Link: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix
 Link: https://github.com/sjvasquez/handwriting-synthesis
-
