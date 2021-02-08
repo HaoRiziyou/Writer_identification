@@ -8,7 +8,7 @@ from utils import add_path
 
 from datastructures.PenPosition import PenPosition
 
-with add_path(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'ext', 'graves')):
+with add_path(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'thirdparty', 'graves')):
     import drawing
     from rnn import rnn
 

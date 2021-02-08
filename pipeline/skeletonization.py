@@ -10,7 +10,7 @@ import gc
 
 from algorithms.image_padding import pad_image, unpad_image
 
-with add_path(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'ext', 'pix2pix')):
+with add_path(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'thirdparty', 'pix2pix')):
     from options.test_options import TestOptions
     from models import create_model
     from data.single_item_dataset import SingleItemDataset
