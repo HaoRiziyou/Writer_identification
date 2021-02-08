@@ -2,3 +2,5 @@
 checkpoints/
 
 *.zip
+
+*__pycache__*
