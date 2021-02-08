@@ -1,2 +1,4 @@
 # ignore checkpoints file
 checkpoints/
+
+*.zip
