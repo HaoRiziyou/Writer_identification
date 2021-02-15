@@ -8,3 +8,5 @@ checkpoints/
 /data/
 
 /build/*
+
+*.pyc
