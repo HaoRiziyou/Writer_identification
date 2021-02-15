@@ -2,8 +2,10 @@
 
 import numpy as np
 import sys
-import sklearn.decomposition
+
+
 import scipy
+import sklearn.decomposition
 import wi19
 import time
 
@@ -53,7 +55,7 @@ def l2_normalise(values):
     return values/((np.sum(values**2,1)**.5)+.00000000000001)[:,None]
 
 def pca_reduce(values,pca_values=None,n_components=200,l1out=False):
-    n_components=1
+    n_components=20
     pca = sklearn.decomposition.PCA(copy=False, n_components=n_components)
     if l1out:
         res = np.zeros_like(pca.fit(values).transform(values))
@@ -98,6 +100,7 @@ def print_values_dist(values,fnames,metric="cityblock",fd=None):
         columns = ["{}".format(c) for c in D[item,:].tolist()]
         fd.write(fnames[item]+","+",".join(columns)+"\n")
     fd.flush()
+
 
 def pipeline(validation_values,pcaset_values,n_components=200,l1out=False):
     t=time.time()
