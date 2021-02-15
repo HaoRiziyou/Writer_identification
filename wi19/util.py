@@ -122,11 +122,11 @@ def load_dm(dm_fname,gt_fname,allow_similarity=True,allow_missing_samples=False,
     :return: a tuple containing the distance matrix, a vector with the sample_identities for every row (and column) in
         the distance matrix, and the a vector with the class id of every sample.
     """
-    print ("Loading submission {} with groundtruth {} ... ").format(dm_fname, gt_fname),
+    print ("Loading submission {} with groundtruth {} ... ".format(dm_fname, gt_fname)),
     fname2sample=lambda x: os.path.basename(x.strip()).split(".")[0]
 
     id_class_tuples=[tuple(reversed(l.split(","))) for l in open(gt_fname).read().strip().split("\n")]
-    print( "\n").join([str(tuple(l)) for l in id_class_tuples])
+    print( "\n".join([str(tuple(l)) for l in id_class_tuples]))
     id2class_dict = {fname2sample(k): (v) for k, v in id_class_tuples}
     print (id2class_dict)
     id2class_dict = {fname2sample(k):int(v) for v,k in id_class_tuples}
