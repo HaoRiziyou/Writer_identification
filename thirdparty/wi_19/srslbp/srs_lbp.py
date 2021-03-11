@@ -2,6 +2,7 @@
 
 import numpy as np
 import sys
+sys.path.append("/home/qiang/Writer_identification")
 import sklearn.decomposition
 import scipy
 import wi19

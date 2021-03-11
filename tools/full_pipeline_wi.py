@@ -2,7 +2,7 @@
 
 import numpy as np
 import sys
-#sys.path.append("/home/qiang/Writer_identification")
+sys.path.append("/home/qiang/Writer_identification")
 
 
 import scipy
