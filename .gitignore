@@ -4,7 +4,7 @@ checkpoints/
 *.zip
 
 *__pycache__*
-data/
+data/*
 /logs
 
 /build/*
