@@ -5,6 +5,7 @@ checkpoints/
 
 *__pycache__*
 data/*
+!data/readme.md
 /logs
 
 /build/*
