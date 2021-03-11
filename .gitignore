@@ -4,8 +4,8 @@ checkpoints/
 *.zip
 
 *__pycache__*
+/data/*
 
-/data2/
 
 /build/*
 
