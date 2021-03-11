@@ -5,7 +5,7 @@ checkpoints/
 
 *__pycache__*
 /data/*
-
+/logs
 
 /build/*
 
