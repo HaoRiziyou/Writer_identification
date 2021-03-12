@@ -49,3 +49,11 @@ The code was mainly produced by https://github.com/Finomnis
 
 Link: https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix
 Link: https://github.com/sjvasquez/handwriting-synthesis
+
+
+## Hello World
+How to render if you have the pretrained models
+
+```bash
+PYTHONPATH='./' ./tools/run_generator.py  -input ./docs/img/input.png -text_in 'above or sinking bellow' -text_out 'hello world'
+```
