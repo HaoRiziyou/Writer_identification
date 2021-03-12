@@ -42,6 +42,7 @@ def main():
         raise NotImplemented()
     else:
         raise NotImplemented()
+    out_images=[]
     with GravesWriter() as writer:
         for n, text_out in enumerate(args.text_out.split('\n')):
             newPenPositions = writer.write(text_out, args.text_in, penPositions)
@@ -70,6 +71,10 @@ def main():
             output_path = f"{args.output}/{n}.png"
             print(f"saving in {output_path} text:'{text_out}'" )
             outputImg.save(output_path)
+            out_images.append(outputImg)
+        #TODO stich all into one
+        # all_stiched.save(f"{args.output}/all.png")
+
 
 
 if __name__ == "__main__":
