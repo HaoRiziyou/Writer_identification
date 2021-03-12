@@ -2,8 +2,15 @@ from distutils.core import setup as __setup
 from distutils.core import Extension as __extension
 import os as __os
 import glob as __glob
+import sys
+import os
 
 def __build():
+    import os
+    devnull = open(os.devnull,"w")
+    stdout, stderr=sys.stdout,sys.stderr
+    sys.stdout,sys.stderr = devnull, devnull
+
     cwd_bup = __os.getcwd()
 
     try:
@@ -24,6 +31,7 @@ def __build():
 
     finally:
         __os.chdir(cwd_bup)
+        sys.stdout,sys.stderr = stdout, stderr
 
 __build()
 

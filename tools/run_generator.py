@@ -24,7 +24,8 @@ from datastructures.PenPosition import plotPenPositions
 
 
 def main():
-    params={'text_in':'hello','text_out':'goodbye', 'output':'/tmp/','input':'/tmp/img.png'}
+    #-input ./docs/img/input.png -text_in 'above or sinking bellow' -text_out 'hello world'
+    params={'text_in':'above or sinking bellow','text_out':'hello world' , 'output':'/tmp/','input':'./docs/img/input.png', 'plot':False}
     args, _ = fargv.fargv(params)
 
     inputImg = Image.open(args.input)
@@ -34,43 +35,38 @@ def main():
         skeletonImg = skeletonizer.skeletonize_sharp(skeletonBlurImg)
 
     penPositions = sample_to_penpositions(skeletonImg)
-
     with GravesWriter() as writer:
-        newPenPositions = writer.write(args.text_out, args.text_in, penPositions)
-
-    newPenPositions = align(newPenPositions, penPositions)
-
-    newSkeletonBlurImg, newSkeletonImg = render_skeleton(newPenPositions, inputImg.size)
-
-    with PenStyleTransfer() as penStyleTransfer:
-        outputImg = penStyleTransfer.transferStyle(newSkeletonBlurImg, inputImg)
-
-    print("Done. Displaying results ...")
-
-    plt.figure('Full Pipeline', figsize=(16, 9))
-    plt.subplot(3, 2, 1)
-    plt.imshow(inputImg)
-    plt.subplot(3, 2, 3)
-    plt.imshow(skeletonBlurImg)
-    plt.subplot(3, 2, 5)
-    plt.imshow(skeletonImg, cmap='binary', vmax=10)
-    plotPenPositions(penPositions)
-    plt.subplot(3, 2, 6)
-    plt.imshow(newSkeletonImg, cmap='binary', vmax=256*10)
-    plotPenPositions(newPenPositions)
-    plt.subplot(3, 2, 4)
-    plt.imshow(newSkeletonBlurImg)
-    plt.subplot(3, 2, 2)
-    plt.imshow(outputImg)
-    plt.show()
-    
-    print("save progress")
-    #outputImg.save(args.output,'tif')
+        for n, text_out in enumerate(args.text_out.split('\n')):
+            newPenPositions = writer.write(text_out, args.text_in, penPositions)
+            newPenPositions = align(newPenPositions, penPositions)
+            newSkeletonBlurImg, newSkeletonImg = render_skeleton(newPenPositions, inputImg.size)
+            with PenStyleTransfer() as penStyleTransfer:
+                outputImg = penStyleTransfer.transferStyle(newSkeletonBlurImg, inputImg)
+            if args.plot:
+                print("Done. Displaying results ...")
+                plt.figure('Full Pipeline', figsize=(16, 9))
+                plt.subplot(3, 2, 1)
+                plt.imshow(inputImg)
+                plt.subplot(3, 2, 3)
+                plt.imshow(skeletonBlurImg)
+                plt.subplot(3, 2, 5)
+                plt.imshow(skeletonImg, cmap='binary', vmax=10)
+                plotPenPositions(penPositions)
+                plt.subplot(3, 2, 6)    
+                plt.imshow(newSkeletonImg, cmap='binary', vmax=256*10)
+                plotPenPositions(newPenPositions)
+                plt.subplot(3, 2, 4)
+                plt.imshow(newSkeletonBlurImg)
+                plt.subplot(3, 2, 2)
+                plt.imshow(outputImg)
+                plt.show()
+            output_path = f"{args.output}/{n}.png"
+            print(f"saving in {output_path} text:'{text_out}'" )
+            outputImg.save(output_path)
 
 
 if __name__ == "__main__":
     main()
-    
     
 
 
