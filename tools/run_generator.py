@@ -25,16 +25,23 @@ from datastructures.PenPosition import plotPenPositions
 
 def main():
     #-input ./docs/img/input.png -text_in 'above or sinking bellow' -text_out 'hello world'
-    params={'text_in':'above or sinking bellow','text_out':'hello world' , 'output':'/tmp/','input':'./docs/img/input.png', 'plot':False}
+    params={'text_in':'above or sinking bellow','text_out':'hello world' , 'output':'/tmp/','input':'./docs/img/input.png', 'plot':False,
+            'skeleton':('pix2pix','naive','qiang1','qiang2','qiang3')}
     args, _ = fargv.fargv(params)
 
     inputImg = Image.open(args.input)
-
-    with Skeletonizer() as skeletonizer:
-        skeletonBlurImg = skeletonizer.skeletonize_blurred(inputImg)
-        skeletonImg = skeletonizer.skeletonize_sharp(skeletonBlurImg)
-
-    penPositions = sample_to_penpositions(skeletonImg)
+    if args.skeleton == 'pix2pix':
+        with Skeletonizer() as skeletonizer:
+            skeletonBlurImg = skeletonizer.skeletonize_blurred(inputImg)
+            skeletonImg = skeletonizer.skeletonize_sharp(skeletonBlurImg)
+        penPositions = sample_to_penpositions(skeletonImg)
+    if args.skeleton == 'naive':
+        #import PIL....
+        # https://scikit-image.org/docs/dev/auto_examples/edges/plot_skeleton.html
+        # https://scikit-image.org/docs/0.10.x/auto_examples/plot_medial_transform.html
+        raise NotImplemented()
+    else:
+        raise NotImplemented()
     with GravesWriter() as writer:
         for n, text_out in enumerate(args.text_out.split('\n')):
             newPenPositions = writer.write(text_out, args.text_in, penPositions)
