@@ -7,11 +7,14 @@ import fargv
 import os
 
 from PIL import Image
+from skimage.morphology import skeletonize
+from skimage.util import invert
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from pipeline.skeletonization import Skeletonizer
+from pipeline.concatenate import get_concat_v_multi_resize
 from pipeline.sampling import sample_to_penpositions
 from pipeline.graves import GravesWriter
 from pipeline.align import align
@@ -36,12 +39,13 @@ def main():
             skeletonImg = skeletonizer.skeletonize_sharp(skeletonBlurImg)
         penPositions = sample_to_penpositions(skeletonImg)
     if args.skeleton == 'naive':
-        #import PIL....
+        skeletonImg = skeletonize(inputImg)
+        penPositions = sample_to_penpositions(skeletonImg)
         # https://scikit-image.org/docs/dev/auto_examples/edges/plot_skeleton.html
         # https://scikit-image.org/docs/0.10.x/auto_examples/plot_medial_transform.html
-        raise NotImplemented()
-    else:
-        raise NotImplemented()
+       # raise NotImplemented()
+    #else:
+       # raise NotImplemented()
     out_images=[]
     with GravesWriter() as writer:
         for n, text_out in enumerate(args.text_out.split('\n')):
@@ -74,7 +78,7 @@ def main():
             out_images.append(outputImg)
         #TODO stich all into one
         # all_stiched.save(f"{args.output}/all.png")
-
+       #get_concat_v_multi_resize([output_images]).save(output_path) 
 
 
 if __name__ == "__main__":
