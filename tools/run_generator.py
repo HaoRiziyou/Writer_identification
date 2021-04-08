@@ -9,11 +9,11 @@ import os
 from PIL import Image
 from skimage.morphology import skeletonize
 from skimage.util import invert
-
+from skimage import filters
 import numpy as np
 import matplotlib.pyplot as plt
-
 from pipeline.skeletonization import Skeletonizer
+
 from pipeline.concatenate import get_concat_v_multi_resize
 from pipeline.sampling import sample_to_penpositions
 from pipeline.graves import GravesWriter
@@ -39,7 +39,11 @@ def main():
             skeletonImg = skeletonizer.skeletonize_sharp(skeletonBlurImg)
         penPositions = sample_to_penpositions(skeletonImg)
     if args.skeleton == 'naive':
-        skeletonImg = skeletonize(inputImg)
+        data = inputImg.convert("L")
+        image = np.asarray(data)
+        val = filters.threshold_otsu(image)
+        image = image < val
+        skeletonImg = skeletonize(image)
         penPositions = sample_to_penpositions(skeletonImg)
         # https://scikit-image.org/docs/dev/auto_examples/edges/plot_skeleton.html
         # https://scikit-image.org/docs/0.10.x/auto_examples/plot_medial_transform.html
@@ -55,23 +59,40 @@ def main():
             with PenStyleTransfer() as penStyleTransfer:
                 outputImg = penStyleTransfer.transferStyle(newSkeletonBlurImg, inputImg)
             if args.plot:
-                print("Done. Displaying results ...")
-                plt.figure('Full Pipeline', figsize=(16, 9))
-                plt.subplot(3, 2, 1)
-                plt.imshow(inputImg)
-                plt.subplot(3, 2, 3)
-                plt.imshow(skeletonBlurImg)
-                plt.subplot(3, 2, 5)
-                plt.imshow(skeletonImg, cmap='binary', vmax=10)
-                plotPenPositions(penPositions)
-                plt.subplot(3, 2, 6)    
-                plt.imshow(newSkeletonImg, cmap='binary', vmax=256*10)
-                plotPenPositions(newPenPositions)
-                plt.subplot(3, 2, 4)
-                plt.imshow(newSkeletonBlurImg)
-                plt.subplot(3, 2, 2)
-                plt.imshow(outputImg)
-                plt.show()
+                if args.skeleton == 'pix2pix':
+                    print("Done. Displaying results ...")
+                    plt.figure('Full Pipeline', figsize=(16, 9))
+                    plt.subplot(3, 2, 1)
+                    plt.imshow(inputImg)
+                    plt.subplot(3, 2, 3)
+                    plt.imshow(skeletonBlurImg)
+                    plt.subplot(3, 2, 5)
+                    plt.imshow(skeletonImg, cmap='binary', vmax=10)
+                    plotPenPositions(penPositions)
+                    plt.subplot(3, 2, 6)    
+                    plt.imshow(newSkeletonImg, cmap='binary', vmax=256*10)
+                    plotPenPositions(newPenPositions)
+                    plt.subplot(3, 2, 4)
+                    plt.imshow(newSkeletonBlurImg)
+                    plt.subplot(3, 2, 2)
+                    plt.imshow(outputImg)
+                    plt.show()
+                if args.skeleton == 'naive':
+                    print("Done. Displaying results ...")
+                    plt.figure('Full Pipeline', figsize=(16, 9))
+                    plt.subplot(2, 2, 1)
+                    plt.imshow(inputImg)
+                    
+                    plt.subplot(2, 2, 3)
+                    plt.imshow(skeletonImg, cmap='binary', vmax=10)
+                    plotPenPositions(penPositions)
+                    plt.subplot(2, 2, 4)    
+                    plt.imshow(newSkeletonImg, cmap='binary', vmax=256*10)
+                    plotPenPositions(newPenPositions)
+                    
+                    plt.subplot(2, 2, 2)
+                    plt.imshow(outputImg)
+                    plt.show()
             output_path = f"{args.output}/{n}.png"
             print(f"saving in {output_path} text:'{text_out}'" )
             outputImg.save(output_path)
