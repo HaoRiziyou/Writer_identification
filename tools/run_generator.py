@@ -60,6 +60,7 @@ def main():
                 outputImg = penStyleTransfer.transferStyle(newSkeletonBlurImg, inputImg)
             if args.plot:
                 if args.skeleton == 'pix2pix':
+                    print(inputImg.size)
                     print("Done. Displaying results ...")
                     plt.figure('Full Pipeline', figsize=(16, 9))
                     plt.subplot(3, 2, 1)
@@ -78,8 +79,9 @@ def main():
                     plt.imshow(outputImg)
                     plt.show()
                 if args.skeleton == 'naive':
-                    print("Done. Displaying results ...")
+                    #print("Done. Displaying results ...")
                     plt.figure('Full Pipeline', figsize=(16, 9))
+                    
                     plt.subplot(2, 2, 1)
                     plt.imshow(inputImg)
                     
