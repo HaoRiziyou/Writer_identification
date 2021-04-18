@@ -1,6 +1,6 @@
 # Spatio-Temporal Handwriting Imitation
 
-![Pipeline Overview](pipeline.png)
+![Pipeline Overview](docs/pipeline.png)
 
 Paper Link: https://arxiv.org/abs/2003.10593
 
@@ -54,6 +54,21 @@ Link: https://github.com/sjvasquez/handwriting-synthesis
 ## Hello World
 How to render if you have the pretrained models
 
+TODO (qiang) polish these up
 ```bash
 PYTHONPATH='./' ./tools/run_generator.py  -input ./docs/img/input.png -text_in 'above or sinking bellow' -text_out 'hello world'
+```
+
+```bash
+#!/bin/bash
+
+SCRIPTPATH=$( cd $(dirname $(readlink -f $0)) ; pwd -P )
+
+export PYTHONPATH=$PYTHONPATH:"$SCRIPTPATH"
+
+python3 "$SCRIPTPATH/tools/full_pipeline.py" \
+       "$SCRIPTPATH/docs/img/input.png" \
+       --text-in "above or sinking below" \
+       --text-out "hahah nihao"
+
 ```

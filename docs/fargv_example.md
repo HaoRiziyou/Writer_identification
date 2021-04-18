@@ -1,4 +1,7 @@
-# #!/usr/bin/env python3
+## fargv reference:
+
+```python
+#!/usr/bin/env python3
 import fargv
 
 params = {
@@ -16,3 +19,4 @@ if __name__ == "__main__":
     new_params, help_str = fargv.fargv(params)
     for k, v in params.items():
         print(k, repr(v), "->", repr(new_params[k]))
+```
