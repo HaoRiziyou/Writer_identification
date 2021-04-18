@@ -72,3 +72,8 @@ python3 "$SCRIPTPATH/tools/full_pipeline.py" \
        --text-out "hahah nihao"
 
 ```
+
+while developing PYTHONPATH should be
+```bash
+PYTHONPATH='./:./thirdparty/wi_19/:' 
+```
