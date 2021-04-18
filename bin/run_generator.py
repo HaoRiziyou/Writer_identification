@@ -99,6 +99,7 @@ def main():
             print(f"saving in {output_path} text:'{text_out}'" )
             outputImg.save(output_path)
             out_images.append(outputImg)
+    
         #TODO stich all into one
         # all_stiched.save(f"{args.output}/all.png")
        #get_concat_v_multi_resize([output_images]).save(output_path) 
