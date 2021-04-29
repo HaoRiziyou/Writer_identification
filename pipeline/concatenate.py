@@ -103,7 +103,7 @@ def modify():
             im.save(os.path.join(output, image_name))
 
 def concatenate():
-    directory = r'pic/'
+    directory = r'naive_pic/'
     img_names = os.listdir(directory)
     #img_names.sort()
     print(type(img_names))
@@ -117,14 +117,13 @@ def concatenate():
     
     return lis
 
-# Todo(qiang): This is no program this code is strictly for debuggin the functions defined here 
 if __name__ == "__main__":
     #modify()
     lis=[]
     lis = concatenate()
 
     #get_concat_v_multi_resize(lis).save('new_pic/mult_h_no_resize.png')
-    get_concat_v_multi_blank(lis).save('new_pic/multi_blank.png')
+    get_concat_v_multi_blank(lis).save('new_pic/multi_naive.png')
     #get_concat_h_multi_resize(lis).save('pic_new/mult_h.png')
     #im1=Image.open('pic/test/0.png')
     #im2=Image.open('pic/test/1.png')
