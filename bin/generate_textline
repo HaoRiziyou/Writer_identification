@@ -15,7 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pipeline.skeletonization import Skeletonizer
 
-from pipeline.concatenate import get_concat_v_multi_resize
+from pipeline.connect import get_concat_v_multi_resize
 from pipeline.sampling import sample_to_penpositions
 from pipeline.graves import GravesWriter
 from pipeline.align import align
