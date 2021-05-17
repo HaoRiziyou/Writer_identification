@@ -1,0 +1,144 @@
+#!/usr/bin/env python3
+
+import sys
+import fargv
+import warnings 
+warnings.filterwarnings('ignore',category=FutureWarning)
+import glob
+
+from skimage.morphology import skeletonize
+from skimage.util import invert
+from skimage import filters
+import numpy as np
+import matplotlib.pyplot as plt
+from pipeline.skeletonization import Skeletonizer
+
+from pipeline.connect import get_concat_v_multi_resize
+from pipeline.sampling import sample_to_penpositions
+from pipeline.graves import GravesWriter
+from pipeline.align import align
+from pipeline.render_skeleton import render_skeleton
+from pipeline.pen_style_transfer import PenStyleTransfer
+
+from datastructures.PenPosition import plotPenPositions
+
+
+from PIL import Image
+from typing import List, Tuple
+from pipeline import connect
+import random
+import os
+
+p={"real_db":set([]),
+    "skeleton":("naive","pix2pix"),
+    "output_dir":"/home/qiang/Writer_identification/data/fake_db/in/",
+    "input_txt":"/home/qiang/Writer_identification/data/input_text/input_7.txt",
+   
+    "output_txt":"/home/qiang/Writer_identification/data/input_text/input_7.txt"
+    
+    #"output_txt":"/tmp/output.txt",
+}
+p, _ = fargv.fargv(p)
+
+def input_to_lines():
+    directory = '/home/qiang/Writer_identification/data/style-7/'
+    img_names = os.listdir(directory)
+    # img_names.sort(key=lambda x:  int(x[:-4]))
+    img_names.sort()
+    img_list = []
+    para_list = []
+    for filename in img_names:
+        if filename.endswith(".png"):
+            img_list.append(Image.open(os.path.join(directory,filename)))
+    
+    with open(p.input_txt,"r") as my_file:
+    # with open('/home/qiang/Writer_identification/data/input_text/p.input_txt',"r") as my_file:
+        for line in my_file:
+            str = line[:-1]
+            para_list.append(str)
+
+    return (img_list, para_list)
+
+    #inputImg = Image.open('data/cvl/')
+
+#def lines_to_output(rendered_lines:List[Image]) -> Image:
+def lines_to_output(render_lines_save,n):
+    output_lines=[]
+    output_lines=connect.concatenate(render_lines_save)
+    connect.get_concat_v_multi_blank(output_lines).save(f"/home/qiang/Writer_identification/data/fake_db/in/{n}.png")
+
+def apply_singleline_generation_pipeline(styleImg:Image, style_txt:str,output_txt:str, skeleton:str, trained_graves_model=None, skeleton_to_output = None)->Image:
+    # assert input_to_skeleton in ["naive", "pix2pix"]
+    tmp_style_path ="/home/qiang/Writer_identification/data/style_7/"
+    # style.save(tmp_style_path)
+    # os.system("apply_pipeline -input {tmp_style_path}")
+    
+    inputImg = styleImg
+
+    if p.skeleton == 'pix2pix':
+        with Skeletonizer() as skeletonizer:
+            skeletonBlurImg = skeletonizer.skeletonize_blurred(inputImg)
+            skeletonImg = skeletonizer.skeletonize_sharp(skeletonBlurImg)
+        penPositions = sample_to_penpositions(skeletonImg)
+    if p.skeleton == 'naive':
+        data = inputImg.convert("L")
+        image = np.asarray(data)
+        val = filters.threshold_otsu(image)
+        image = image < val
+        skeletonImg = skeletonize(image)
+        penPositions = sample_to_penpositions(skeletonImg)
+
+    out_images=[]
+    with GravesWriter() as writer:
+        with open(output_txt,"r") as fh:
+            output = fh.read().splitlines()
+        for n, text_out in enumerate(output):
+            newPenPositions = writer.write(text_out, style_txt, penPositions)
+            newPenPositions = align(newPenPositions, penPositions)
+            newSkeletonBlurImg, newSkeletonImg = render_skeleton(newPenPositions, inputImg.size)
+            with PenStyleTransfer() as penStyleTransfer:
+                outputImg = penStyleTransfer.transferStyle(newSkeletonBlurImg, inputImg)
+
+
+        # output_path = f"{p.output_dir}/{n}.png"
+            output_path = f"/home/qiang/Writer_identification/data/text_img/{n}.png"
+            print("start saving")
+            outputImg.save(output_path)
+    # return output_path
+
+
+def apply_paragraph_generation_pipeline(style:Image, style_text:str,output_text:str, input_to_skeleton:str, trained_graves_model:str, skeleton_to_output:str)-> Image:
+    
+    pass
+    
+    
+
+
+if __name__ == "__main__":
+    input_txt_paragraph = open(p.input_txt,"r").read()
+    output_txt_paragraph = open(p.output_txt,"r").read()
+    my_data = input_to_lines()
+    directory = "/home/qiang/Writer_identification/data/text_img/"
+    fileList = glob.glob(f"{directory}/*.png")
+    # p.real_db = lambda(x)
+    n=0
+    for x in my_data[0]:
+        # filename = style_img.split("/")[-1]
+        # output_path = f"{p.output_dir}/{filename}"
+        # miss style text
+        # print("*******")
+        # print(text)
+        # fil = text.split("\n")[-1]
+            apply_singleline_generation_pipeline(x,my_data[1][0],p.output_txt,p.skeleton)
+        # os.listdir(directory)
+
+            lines_to_output(directory,n) 
+            n = n +1
+            for f in fileList:
+                os.remove(f)
+
+
+        
+        #apply_paragraph_generation_pipeline(Image.open(style_img), )
+
+

@@ -102,8 +102,8 @@ def modify():
             im.thumbnail((768, 128))
             im.save(os.path.join(output, image_name))
 
-def concatenate():
-    directory = '/home/qiang/test/naive_pic/'
+def concatenate(directory):
+    #directory = '/home/qiang/test/naive_pic/'
     img_names = os.listdir(directory)
     #img_names.sort()
     print(type(img_names))

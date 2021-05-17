@@ -53,7 +53,10 @@ def main():
        # raise NotImplemented()
     out_images=[]
     with GravesWriter() as writer:
-        for n, text_out in enumerate(args.text_out.split('\n')):
+        with open(args.text_out,"r") as fh:
+            output_txt = fh.read().splitlines()
+        for n, text_out in enumerate(output_txt):
+            #file= text_out[-2]
             newPenPositions = writer.write(text_out, args.text_in, penPositions)
             newPenPositions = align(newPenPositions, penPositions)
             newSkeletonBlurImg, newSkeletonImg = render_skeleton(newPenPositions, inputImg.size)
