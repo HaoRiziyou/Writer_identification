@@ -32,26 +32,33 @@ import os
 p={"real_db":set([]),
     "skeleton":("naive","pix2pix"),
     "output_dir":"/home/qiang/Writer_identification/data/fake_db/in/",
-    "input_txt":"/home/qiang/Writer_identification/data/input_text/input_7.txt",
-   
+    "input_txt":"/home/qiang/Writer_identification/data/input_text/input_all.txt",
+    "style_dir":"/home/qiang/Writer_identification/data/style/style-all",
     "output_txt":"/home/qiang/Writer_identification/data/input_text/input_7.txt"
-    
+    #"input_txt_dir":"/home/qiang/Writer_identification/data/input_text/"
     #"output_txt":"/tmp/output.txt",
 }
 p, _ = fargv.fargv(p)
 
-def input_to_lines():
-    directory = '/home/qiang/Writer_identification/data/style-7/'
-    img_names = os.listdir(directory)
+
+
+# change the content of style directory either 7 or 8 or both png file , also change the conten of the input txt , will create paragraphs
+def input_to_lines(style_directory,style_txt):
+    # directory = p.style_dir
+    img_names = os.listdir(style_directory)
     # img_names.sort(key=lambda x:  int(x[:-4]))
     img_names.sort()
     img_list = []
+    img_list2=[]
     para_list = []
     for filename in img_names:
-        if filename.endswith(".png"):
-            img_list.append(Image.open(os.path.join(directory,filename)))
-    
-    with open(p.input_txt,"r") as my_file:
+        if filename.endswith("7.png"):
+            img_list.append(Image.open(os.path.join(style_directory,filename)))
+        if filename.endswith("8.png"):
+            img_list2.append(Image.open(os.path.join(style_directory,filename)))
+
+    img_list = img_list + img_list2
+    with open(style_txt,"r") as my_file:
     # with open('/home/qiang/Writer_identification/data/input_text/p.input_txt',"r") as my_file:
         for line in my_file:
             str = line[:-1]
@@ -65,11 +72,15 @@ def input_to_lines():
 def lines_to_output(render_lines_save,n):
     output_lines=[]
     output_lines=connect.concatenate(render_lines_save)
-    connect.get_concat_v_multi_blank(output_lines).save(f"/home/qiang/Writer_identification/data/fake_db/in/{n}.png")
+    connect.get_concat_v_multi_blank(output_lines).save(f"{p.output_dir}/{n}.png")
 
+
+
+
+# change the output_txt ,generate diff content.
 def apply_singleline_generation_pipeline(styleImg:Image, style_txt:str,output_txt:str, skeleton:str, trained_graves_model=None, skeleton_to_output = None)->Image:
     # assert input_to_skeleton in ["naive", "pix2pix"]
-    tmp_style_path ="/home/qiang/Writer_identification/data/style_7/"
+    # tmp_style_path ="/home/qiang/Writer_identification/data/style_7/"
     # style.save(tmp_style_path)
     # os.system("apply_pipeline -input {tmp_style_path}")
     
@@ -117,25 +128,28 @@ def apply_paragraph_generation_pipeline(style:Image, style_text:str,output_text:
 if __name__ == "__main__":
     input_txt_paragraph = open(p.input_txt,"r").read()
     output_txt_paragraph = open(p.output_txt,"r").read()
-    my_data = input_to_lines()
+    my_data = input_to_lines(p.style_dir,p.input_txt)
     directory = "/home/qiang/Writer_identification/data/text_img/"
     fileList = glob.glob(f"{directory}/*.png")
     # p.real_db = lambda(x)
-    n=0
-    for x in my_data[0]:
+    # n=0
+    for count,img in enumerate(my_data[0]):
         # filename = style_img.split("/")[-1]
         # output_path = f"{p.output_dir}/{filename}"
         # miss style text
         # print("*******")
         # print(text)
         # fil = text.split("\n")[-1]
-            apply_singleline_generation_pipeline(x,my_data[1][0],p.output_txt,p.skeleton)
+        if count <27:
+            apply_singleline_generation_pipeline(img,my_data[1][0],p.output_txt,p.skeleton)
         # os.listdir(directory)
-
-            lines_to_output(directory,n) 
-            n = n +1
-            for f in fileList:
-                os.remove(f)
+        elif count>=27 :
+            apply_singleline_generation_pipeline(img,my_data[1][1],p.output_txt,p.skeleton)
+        lines_to_output(directory,count) 
+        
+        print(img.filename + " is over.")
+        for f in fileList:
+            os.remove(f)
 
 
         

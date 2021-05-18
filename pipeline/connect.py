@@ -106,7 +106,7 @@ def concatenate(directory):
     #directory = '/home/qiang/test/naive_pic/'
     img_names = os.listdir(directory)
     #img_names.sort()
-    print(type(img_names))
+    # print(type(img_names))
     img_names.sort(key=lambda x: int(x[:-4]))
     lis=[]
     for filename in img_names:
