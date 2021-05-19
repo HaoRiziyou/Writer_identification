@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import numpy as np
 import sys
@@ -7,7 +7,7 @@ sys.path.append("/home/qiang/Writer_identification")
 
 import scipy
 import sklearn.decomposition
-import wi19
+from thirdparty.wi_19 import wi19
 import time
 
 """SRS LBP.
@@ -56,7 +56,7 @@ def l2_normalise(values):
     return values/((np.sum(values**2,1)**.5)+.00000000000001)[:,None]
 
 def pca_reduce(values,pca_values=None,n_components=200,l1out=False):
-    n_components=187
+    n_components=20
     pca = sklearn.decomposition.PCA(copy=False, n_components=n_components)
     if l1out:
         res = np.zeros_like(pca.fit(values).transform(values))

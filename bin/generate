@@ -69,11 +69,12 @@ def input_to_lines(style_directory,style_txt):
     #inputImg = Image.open('data/cvl/')
 
 #def lines_to_output(rendered_lines:List[Image]) -> Image:
-def lines_to_output(render_lines_save,n):
+def lines_to_output(render_lines_save,s):
     output_lines=[]
+    
     output_lines=connect.concatenate(render_lines_save)
-    connect.get_concat_v_multi_blank(output_lines).save(f"{p.output_dir}/{n}.png")
-
+    #connect.get_concat_v_multi_blank(output_lines).save(f"{p.output_dir}/{n}.png")
+    connect.get_concat_v_multi_blank(output_lines).save(f"{p.output_dir}/{s}.png")
 
 
 
@@ -145,7 +146,9 @@ if __name__ == "__main__":
         # os.listdir(directory)
         elif count>=27 :
             apply_singleline_generation_pipeline(img,my_data[1][1],p.output_txt,p.skeleton)
-        lines_to_output(directory,count) 
+        # style img foramt xxxx-x.png this take xxxx-x out
+        s = img.filename[-10:-4]
+        lines_to_output(directory,s) 
         
         print(img.filename + " is over.")
         for f in fileList:
