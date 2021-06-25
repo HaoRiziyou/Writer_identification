@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+import os
+import fargv
+import sys
+import full_pipeline_wi
+
+params={
+	"db_images":set([]),
+        "img_dir":'/home/qiang/Writer_identification/data/fake_db/out/*.png',
+        "feature_csv":'/home/qiang/Writer_identification/data/submission/out/features.csv',
+        "output_csv":'/home/qiang/Writer_identification/data/submission/out/submission.csv',
+        "srs_bp_params": " -T otsu -r 1 2 3 4 5 6 7 8 9 10 11 12 -s bilinear -i"
+
+}
+
+
+p,_= fargv.fargv(params)
+
+
+if __name__=="__main__":
+   #  directory ="/home/qiang/Writer_identification/data/"
+    os.system(f"./thirdparty/wi_19/srslbp/bilde/src/lbpFeatures2 {p.srs_bp_params} {p.img_dir} > {p.feature_csv}")
+    os.system(f"./bin/full_pipeline_wi.py -validation_csv={p.feature_csv} -output={p.output_csv}")
