@@ -159,7 +159,7 @@ if __name__ == "__main__":
         # print("*******")
         # print(text)
         # fil = text.split("\n")[-1]
-        if count >=21:
+        
             apply_singleline_generation_pipeline(dou[count][1][1][0], dou[count][1][1][1], p.output_txt, p.skeleton)
         # os.listdir(directory)
             #apply_singleline_generation_pipeline(my_data[count][1][k][0], my_data[count][1][k][1], p.output_txt, p.skeleton)
