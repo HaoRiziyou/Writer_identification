@@ -41,7 +41,7 @@ cd data/cvl
 unzip ../../cvldb.zip
 ```
 ##Download json file
-wget https://drive.google.com/drive/folders/18Q_zOuJCV6SFQOkTFjd1EnqW5ejaVW-X?usp=sharing
+https://drive.google.com/file/d/1_XMeHVb6brvjGFWQrhdTC-L3KGuvFRN1/view?usp=sharing
 
 
 

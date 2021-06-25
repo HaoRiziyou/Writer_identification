@@ -19,7 +19,6 @@ with add_path(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'e
 
 
 class PenStyleTransfer:
-
     def __init__(self):
         self.dir_path = os.path.dirname(os.path.realpath(__file__))
         self.pix2pixDir = os.path.join(self.dir_path, '..', 'ext', 'pix2pix')
