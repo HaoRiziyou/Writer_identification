@@ -2,10 +2,12 @@
 
 import sys
 import fargv
-import warnings 
-warnings.filterwarnings('ignore',category=FutureWarning)
-import glob
+import warnings
+import random
 
+warnings.filterwarnings('ignore', category=FutureWarning)
+import glob
+import json
 from skimage.morphology import skeletonize
 from skimage.util import invert
 from skimage import filters
@@ -22,71 +24,75 @@ from pipeline.pen_style_transfer import PenStyleTransfer
 
 from datastructures.PenPosition import plotPenPositions
 
-
 from PIL import Image
 from typing import List, Tuple
 from pipeline import connect
-import random
 import os
 
-p={"real_db":set([]),
-    "skeleton":("naive","pix2pix"),
-    "output_dir":"/home/qiang/Writer_identification/data/fake_db/in/",
-    "input_txt":"/home/qiang/Writer_identification/data/input_text/input_all.txt",
-    "style_dir":"/home/qiang/Writer_identification/data/style/style-all",
-    "output_txt":"/home/qiang/Writer_identification/data/input_text/input_7.txt"
-    #"input_txt_dir":"/home/qiang/Writer_identification/data/input_text/"
-    #"output_txt":"/tmp/output.txt",
-}
+
+"""
+this input contains json file,which has all the txt lines and cropped png as style file
+"""
+p = {"real_db": set([]),
+     "skeleton": ("naive", "pix2pix"),
+     "output_dir": "/home/qiang/Writer_identification/data/fake_db/in/",
+     "input_txt": "/home/qiang/Writer_identification/data/input_text/input_all.txt",
+     "style_dir": "/home/qiang/Writer_identification/data/style/style-all",
+     "output_txt": "/home/qiang/Writer_identification/data/input_text/input_7.txt",
+     "input": "/home/qiang/Writer_identification/data/real_db/txt_7/",
+     # "input_txt_dir":"/home/qiang/Writer_identification/data/input_text/"
+     # "output_txt":"/tmp/output.txt",
+     }
 p, _ = fargv.fargv(p)
 
 
-
 # change the content of style directory either 7 or 8 or both png file , also change the conten of the input txt , will create paragraphs
-def input_to_lines(style_directory,style_txt):
-    # directory = p.style_dir
-    img_names = os.listdir(style_directory)
-    # img_names.sort(key=lambda x:  int(x[:-4]))
-    img_names.sort()
+def input_to_lines(input_directory):
     img_list = []
-    img_list2=[]
-    para_list = []
-    for filename in img_names:
-        if filename.endswith("7.png"):
-            img_list.append(Image.open(os.path.join(style_directory,filename)))
-        if filename.endswith("8.png"):
-            img_list2.append(Image.open(os.path.join(style_directory,filename)))
+    txt_list = []
+    res = []
+    directory = p.input
+    file1 = glob.glob('/home/qiang/Writer_identification/data/real_db/txt_7/*.png')
+    file2 = glob.glob('/home/qiang/Writer_identification/data/real_db/txt_7/*.json')
 
-    img_list = img_list + img_list2
-    with open(style_txt,"r") as my_file:
-    # with open('/home/qiang/Writer_identification/data/input_text/p.input_txt',"r") as my_file:
-        for line in my_file:
-            str = line[:-1]
-            para_list.append(str)
+    file1.sort()
+    for x in range(len(file1)):
+        for y in range(len(file2)):
+            if (os.path.basename(file1[x])[:-4] == os.path.basename(file2[y])[:-5]):
+                my_tuple = (file1[x], file2[y])
+                res.append(my_tuple)
 
-    return (img_list, para_list)
+    for filename in res:
+        im = Image.open(filename[0])
+        img_list.append(im)
+        txt = json.load(open(filename[1]))
+        txt_list.append(txt)
+        #print(filename[0], filename[1])
 
-    #inputImg = Image.open('data/cvl/')
 
-#def lines_to_output(rendered_lines:List[Image]) -> Image:
-def lines_to_output(render_lines_save,s):
-    output_lines=[]
-    
-    output_lines=connect.concatenate(render_lines_save)
-    #connect.get_concat_v_multi_blank(output_lines).save(f"{p.output_dir}/{n}.png")
+    return img_list, txt_list
+
+
+
+# def lines_to_output(rendered_lines:List[Image]) -> Image:
+def lines_to_output(render_lines_save, s):
+    output_lines = []
+
+    output_lines = connect.concatenate(render_lines_save)
+    # connect.get_concat_v_multi_blank(output_lines).save(f"{p.output_dir}/{n}.png")
     connect.get_concat_v_multi_blank(output_lines).save(f"{p.output_dir}/{s}.png")
 
 
-
 # change the output_txt ,generate diff content.
-def apply_singleline_generation_pipeline(styleImg:Image, style_txt:str,output_txt:str, skeleton:str, trained_graves_model=None, skeleton_to_output = None)->Image:
+def apply_singleline_generation_pipeline(styleImg: Image, style_txt: str, output_txt: str, skeleton: str,
+                                         trained_graves_model=None, skeleton_to_output=None) -> Image:
     # assert input_to_skeleton in ["naive", "pix2pix"]
     # tmp_style_path ="/home/qiang/Writer_identification/data/style_7/"
     # style.save(tmp_style_path)
     # os.system("apply_pipeline -input {tmp_style_path}")
-    
-    inputImg = styleImg
 
+    styleImg = connect.add_margin(styleImg,0,400,0,400,(255,255,255))
+    inputImg = styleImg
     if p.skeleton == 'pix2pix':
         with Skeletonizer() as skeletonizer:
             skeletonBlurImg = skeletonizer.skeletonize_blurred(inputImg)
@@ -100,9 +106,9 @@ def apply_singleline_generation_pipeline(styleImg:Image, style_txt:str,output_tx
         skeletonImg = skeletonize(image)
         penPositions = sample_to_penpositions(skeletonImg)
 
-    out_images=[]
+    out_images = []
     with GravesWriter() as writer:
-        with open(output_txt,"r") as fh:
+        with open(output_txt, "r") as fh:
             output = fh.read().splitlines()
         for n, text_out in enumerate(output):
             newPenPositions = writer.write(text_out, style_txt, penPositions)
@@ -111,51 +117,58 @@ def apply_singleline_generation_pipeline(styleImg:Image, style_txt:str,output_tx
             with PenStyleTransfer() as penStyleTransfer:
                 outputImg = penStyleTransfer.transferStyle(newSkeletonBlurImg, inputImg)
 
-
-        # output_path = f"{p.output_dir}/{n}.png"
+            # output_path = f"{p.output_dir}/{n}.png"
             output_path = f"/home/qiang/Writer_identification/data/text_img/{n}.png"
             print("start saving")
             outputImg.save(output_path)
     # return output_path
 
 
-def apply_paragraph_generation_pipeline(style:Image, style_text:str,output_text:str, input_to_skeleton:str, trained_graves_model:str, skeleton_to_output:str)-> Image:
-    
+def apply_paragraph_generation_pipeline(style: Image, style_text: str, output_text: str, input_to_skeleton: str,
+                                        trained_graves_model: str, skeleton_to_output: str) -> Image:
     pass
-    
-    
 
 
 if __name__ == "__main__":
-    input_txt_paragraph = open(p.input_txt,"r").read()
-    output_txt_paragraph = open(p.output_txt,"r").read()
-    my_data = input_to_lines(p.style_dir,p.input_txt)
+    input_txt_paragraph = open(p.input_txt, "r").read()
+    output_txt_paragraph = open(p.output_txt, "r").read()
+    dou=[]
+
+    my_tuple = input_to_lines(p.input)
     directory = "/home/qiang/Writer_identification/data/text_img/"
     fileList = glob.glob(f"{directory}/*.png")
-    # p.real_db = lambda(x)
-    # n=0
-    for count,img in enumerate(my_data[0]):
+    random.seed(20)
+    r = random.randint(1,8)
+
+    for k in range(len(my_tuple[0])):
+        res = []
+        for n in range(len(my_tuple[1][k]["captions"])):
+            textline = my_tuple[0][k].crop(my_tuple[1][k]['rectangles_ltrb'][n])
+            caption = my_tuple[1][k]['captions'][n]
+            caption = caption[caption.find("@") + 1:]
+            res.append((textline, caption))
+            # textline.show()
+            # print(n)
+        dou.append((k, res))
+
+
+    for count, img in enumerate(my_tuple[0]):
         # filename = style_img.split("/")[-1]
         # output_path = f"{p.output_dir}/{filename}"
         # miss style text
         # print("*******")
         # print(text)
         # fil = text.split("\n")[-1]
-        if count <27:
-            apply_singleline_generation_pipeline(img,my_data[1][0],p.output_txt,p.skeleton)
+        if count >=21:
+            apply_singleline_generation_pipeline(dou[count][1][1][0], dou[count][1][1][1], p.output_txt, p.skeleton)
         # os.listdir(directory)
-        elif count>=27 :
-            apply_singleline_generation_pipeline(img,my_data[1][1],p.output_txt,p.skeleton)
+            #apply_singleline_generation_pipeline(my_data[count][1][k][0], my_data[count][1][k][1], p.output_txt, p.skeleton)
         # style img foramt xxxx-x.png this take xxxx-x out
-        s = img.filename[-10:-4]
-        lines_to_output(directory,s) 
-        
-        print(img.filename + " is over.")
-        for f in fileList:
-            os.remove(f)
+            s = img.filename[-18:-4]
+            lines_to_output(directory, s)
 
+            print(img.filename + " is over.")
+            for f in fileList:
+               os.remove(f)
 
-        
-        #apply_paragraph_generation_pipeline(Image.open(style_img), )
-
-
+        # apply_paragraph_generation_pipeline(Image.open(style_img), )
