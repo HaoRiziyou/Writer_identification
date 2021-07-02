@@ -75,7 +75,7 @@ def load_page_images_and_transcriptions(image_paths, transcription_paths):
 
 
 def apply_generation_pipeline(style_img: Image, style_txt: str, target_txt: str, skeleton: str,
-                                         trained_graves_model=None, skeleton_to_output=None) -> Image:
+                                         trained_graves_model=None, skeleton_to_output=None) -> List[Tuple[object, str]]:
     """Renders textlines acording to a style image image.
 
     Args:
@@ -117,14 +117,16 @@ def apply_generation_pipeline(style_img: Image, style_txt: str, target_txt: str,
     return rendered_textlines
 
 
-def stich_lines(rendered_textlines):
-    """Takes a list of
+def stich_lines(rendered_textlines:List[Tuple[object, str]]) -> Tuple[object, str] :
+    """Takes a list of Images and their captions and returns a single paragraph image and its caption.
+
+    The paragraph caption is stiched by "\n"
 
     Args:
-        rendered_textlines ():
+        rendered_textlines (): A list of Tuples with a PIL Image of a textline  and a string with its transcription.
 
     Returns:
-
+        A tuple with the paragraph PIL Image and its caption as string.
     """
     all_heights = [img.size[1] for (img, _) in rendered_textlines if img is not None]
     median_height = sorted(all_heights)[len(all_heights)//2]
@@ -142,7 +144,7 @@ def stich_lines(rendered_textlines):
         left, right, bottom = 0, textline.shape[1], top+textline.shape[0]
         new_page[top:bottom, left:right, :] = textline
         top = bottom
-    return Image.fromarray(new_page)
+    return Image.fromarray(new_page), "\n".join([caption for (_, caption) in rendered_textlines ])
 
 
 # change the output_txt ,generate diff content.
@@ -191,7 +193,7 @@ if __name__ == "__main__":
         output_txt = open(p.output_txt).read()
     except FileNotFoundError:
         output_txt = p.output_txt
-
+    n = 0
     for pageid in pageid_to_images.keys():
         page_image = pageid_to_images[pageid]
         textline_transcriptions = pageid_to_transcriptions[pageid]
@@ -199,7 +201,10 @@ if __name__ == "__main__":
             style_textline_image = page_image.crop(textline_transcriptions['rectangles_ltrb'][style_line_num])
             style_textline_caption = textline_transcriptions['captions'][style_line_num]
             style_textline_caption = style_textline_caption[style_textline_caption.find("@") + 1:]
-            paded_textline_image = connect.add_margin(style_textline_image, 0, p.style_h_pad, 0, p.style_h_pad, (255, 255, 255))  # Why do I need padding???? How much should I pad?????
-            synthetic_images_captions = apply_generation_pipeline(paded_textline_image, style_textline_caption, output_txt, p.skeleton)
-            rendered_paragraph = stich_lines([img for (img, _) in synthetic_images_captions])
+            paded_textline_image = connect.add_margin(style_textline_image, 0, p.style_h_pad, 0, p.style_h_pad, (
+            255, 255, 255))  # Why do I need padding???? How much should I pad?????
+            synthetic_images_captions = apply_generation_pipeline(paded_textline_image, style_textline_caption,
+                                                                  output_txt, p.skeleton)
+            # synthetic_images_captions List[Tuple[Image, str]] -> List[Image]
+            rendered_paragraph, paragraph_transcription = stich_lines(synthetic_images_captions)
             rendered_paragraph.save(f"{p.output_dir}/{pageid}_{style_line_num:03}_all.png")
