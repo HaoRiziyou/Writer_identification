@@ -206,5 +206,5 @@ if __name__ == "__main__":
             synthetic_images_captions = apply_generation_pipeline(paded_textline_image, style_textline_caption,
                                                                   output_txt, p.skeleton)
             # synthetic_images_captions List[Tuple[Image, str]] -> List[Image]
-            rendered_paragraph = stich_lines(synthetic_images_captions)
+            rendered_paragraph, _ = stich_lines(synthetic_images_captions)
             rendered_paragraph.save(f"{p.output_dir}/{pageid}_{style_line_num:03}_all.png")
