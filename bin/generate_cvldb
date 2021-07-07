@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+
+import sys
+import fargv
+import warnings
+import random
+
+warnings.filterwarnings('ignore', category=FutureWarning)
+import glob
+import json
+from skimage.morphology import skeletonize
+from skimage.util import invert
+from skimage import filters
+import numpy as np
+import matplotlib.pyplot as plt
+from pipeline.skeletonization import Skeletonizer
+
+from pipeline.connect import get_concat_v_multi_resize
+from pipeline.sampling import sample_to_penpositions
+from pipeline.graves import GravesWriter
+from pipeline.align import align
+from pipeline.render_skeleton import render_skeleton
+from pipeline.pen_style_transfer import PenStyleTransfer
+
+from datastructures.PenPosition import plotPenPositions
+
+from PIL import Image
+from typing import List, Tuple
+from pipeline import connect
+import os
+from typing import Union, List, Tuple
+
+t_line_or_lines = Union[List[str], str]
+
+
+p = {
+     "style_images": set(glob.glob("./data/real_db/txt_7/*.png")),
+     "style_transcriptions": set(glob.glob("./data/real_db/txt_7/*.json")),
+     "style_h_pad": 400,
+     "skeleton": ("naive", "pix2pix"),
+     "output_dir": "./data/rendered/",
+     "output_txt": "Sample output",
+     "show_output": True
+     }
+p, _ = fargv.fargv(p)
+
+
+# change the content of style directory either 7 or 8 or both png file , also change the conten of the input txt , will create paragraphs
+def load_page_images_and_transcriptions(image_paths, transcription_paths):
+    """Loads Pages and their textline transcriptions
+    The file base-name (after last / and before first .) is assumed to be the id of the sample
+    Args:
+        image_paths (): A list of unix paths to the page images
+        transcription_paths (): A list of unix paths to the page groundtruth
+    Returns:
+        A tuple with a dictionary mapping sample ids to images and a dictionary mapping sample ids to groundtruths in CB style
+    """
+    image_paths = sorted(image_paths)
+    transcription_paths = sorted(transcription_paths)
+    pageids_to_images = {}
+    pageids_to_transcriptions = {}
+    for image_path, transcription_path in zip(image_paths, transcription_paths):
+        img_path_broken = image_path.split("/")
+        transcription_path_broken = transcription_path.split("/")
+        assert img_path_broken[:-1] == transcription_path_broken[:-1]  # all folders must agree
+        assert img_path_broken[-1][:img_path_broken[-1].find(".")] == transcription_path_broken[-1][:transcription_path_broken[-1].find(".")]  # the base filename must also agree
+        page_id = img_path_broken[-1][:img_path_broken[-1].find(".")]
+        pageids_to_images[page_id] = Image.open(image_path)
+        pageids_to_transcriptions[page_id] = json.load(open(transcription_path))
+    return pageids_to_images, pageids_to_transcriptions
+
+
+
+def apply_generation_pipeline(style_img: Image, style_txt: str, target_txt: str, skeleton: str,
+                                         trained_graves_model=None, skeleton_to_output=None) -> List[Tuple[object, str]]:
+    """Renders textlines acording to a style image image.
+    Args:
+        style_img (): A PIL image with a single textline of style
+        style_txt (): A string with the caption of the style image textline
+        target_txt (): A string with the desired caption of the generated paragraph textlines are splited by newlines.
+        skeleton (): A string that is either 'pix2pix' or 'naive'
+        trained_graves_model (): TODO
+        skeleton_to_output (): TODO
+    Returns:
+        A list of tuples with textline images and their respective captions.
+    """
+    # assert input_to_skeleton in ["naive", "pix2pix"]
+    # tmp_style_path ="/home/qiang/Writer_identification/data/style_7/"
+    # style.save(tmp_style_path)
+    # os.system("apply_pipeline -input {tmp_style_path}")
+    rendered_textlines = []
+    with GravesWriter() as writer, Skeletonizer() as skeletonizer, PenStyleTransfer() as penStyleTransfer:
+        if skeleton == 'pix2pix':
+            style_blured_skeleton = skeletonizer.skeletonize_blurred(style_img)
+            style_skeleton = skeletonizer.skeletonize_sharp(style_blured_skeleton)
+            penPositions = sample_to_penpositions(style_skeleton)
+        if skeleton == 'naive':  # even here we are inside the Skeletonizer() context, todo fix this
+            image = np.asarray(style_img.convert("L"))
+            val = filters.threshold_otsu(image)
+            image = image < val
+            style_skeleton = skeletonize(image)
+            penPositions = sample_to_penpositions(style_skeleton)
+        for out_line in target_txt.split("\n"):
+            if len(out_line.strip()) > 0:
+                newPenPositions = writer.write(out_line, style_txt, penPositions)
+                newPenPositions = align(newPenPositions, penPositions)
+                newSkeletonBlurImg, newSkeletonImg = render_skeleton(newPenPositions) # TODO lets make this as tight a as possible
+                rendered_textline = penStyleTransfer.transferStyle(newSkeletonBlurImg, style_img)
+                rendered_textlines.append((rendered_textline, out_line))
+            else:
+                rendered_textlines.append((None, out_line))
+    return rendered_textlines
+
+
+def stich_lines(rendered_textlines:List[Tuple[object, str]]) -> Tuple[object, str] :
+    """Takes a list of Images and their captions and returns a single paragraph image and its caption.
+    The paragraph caption is stiched by "\n"
+    Args:
+        rendered_textlines (): A list of Tuples with a PIL Image of a textline  and a string with its transcription.
+    Returns:
+        A tuple with the paragraph PIL Image and its caption as string.
+    """
+    all_heights = [img.size[1] for (img, _) in rendered_textlines if img is not None]
+    median_height = sorted(all_heights)[len(all_heights)//2]
+    textline_arrays = []
+    for textline, _ in rendered_textlines: # replacing None images for white images of median height
+        if textline is None:
+            textline_arrays.append(np.ones([median_height, median_height, 3], np.uint8) * 255)
+        else:
+            textline_arrays.append(np.asarray(textline))
+    heights = [line.shape[0] for line in textline_arrays]
+    widths = [line.shape[1] for line in textline_arrays]
+    new_page = np.ones([sum(heights), max(widths), 3], dtype=np.uint8)*128
+    top = 0
+    for textline in textline_arrays:
+        left, right, bottom = 0, textline.shape[1], top+textline.shape[0]
+        new_page[top:bottom, left:right, :] = textline
+        top = bottom
+    return Image.fromarray(new_page), "\n".join([caption for (_, caption) in rendered_textlines ])
+
+
+# change the output_txt ,generate diff content.
+def apply_singleline_generation_pipeline(style_img: Image, style_txt: str, target_txt: str, skeleton: str,
+                                         trained_graves_model=None, skeleton_to_output=None) -> Image:
+    """
+    Args:
+        style_img (): A PIL image with a single textline of style
+        style_txt (): A string with the caption of the style image textline
+        target_txt (): A string with the desired caption of the generated image
+        skeleton (): A string that is either 'pix2pix' or 'naive'
+        trained_graves_model ():
+        skeleton_to_output ():
+    Returns:
+    """
+
+    inputImg = style_img
+    if skeleton == 'pix2pix':
+        with Skeletonizer() as skeletonizer:
+            skeletonBlurImg = skeletonizer.skeletonize_blurred(inputImg)
+            skeletonImg = skeletonizer.skeletonize_sharp(skeletonBlurImg)
+        penPositions = sample_to_penpositions(skeletonImg)
+    if skeleton == 'naive':
+        data = inputImg.convert("L")
+        image = np.asarray(data)
+        val = filters.threshold_otsu(image)
+        image = image < val
+        skeletonImg = skeletonize(image)
+        penPositions = sample_to_penpositions(skeletonImg)
+    with GravesWriter() as writer:
+        text_out = target_txt
+        newPenPositions = writer.write(text_out, style_txt, penPositions)
+        newPenPositions = align(newPenPositions, penPositions)
+        newSkeletonBlurImg, newSkeletonImg = render_skeleton(newPenPositions, inputImg.size)
+        with PenStyleTransfer() as penStyleTransfer:
+            outputImg = penStyleTransfer.transferStyle(newSkeletonBlurImg, inputImg)
+    return outputImg
+
+
+if __name__ == "__main__":
+    pageid_to_images, pageid_to_transcriptions = load_page_images_and_transcriptions(p.style_images, p.style_transcriptions)
+    try:
+        output_txt = open(p.output_txt).read()
+    except FileNotFoundError:
+        output_txt = p.output_txt
+    n = 0
+    for pageid in pageid_to_images.keys():
+        page_image = pageid_to_images[pageid]
+        textline_transcriptions = pageid_to_transcriptions[pageid]
+        for style_line_num in range(len(textline_transcriptions["captions"])):
+            style_textline_image = page_image.crop(textline_transcriptions['rectangles_ltrb'][style_line_num])
+            style_textline_caption = textline_transcriptions['captions'][style_line_num]
+            style_textline_caption = style_textline_caption[style_textline_caption.find("@") + 1:]
+            paded_textline_image = connect.add_margin(style_textline_image, 0, p.style_h_pad, 0, p.style_h_pad, (
+            255, 255, 255))  # Why do I need padding???? How much should I pad?????
+            synthetic_images_captions = apply_generation_pipeline(paded_textline_image, style_textline_caption,
+                                                                  output_txt, p.skeleton)
+            # synthetic_images_captions List[Tuple[Image, str]] -> List[Image]
+            rendered_paragraph, _ = stich_lines(synthetic_images_captions)
+            rendered_paragraph.save(f"{p.output_dir}/{pageid}_{style_line_num:03}_all.png")
